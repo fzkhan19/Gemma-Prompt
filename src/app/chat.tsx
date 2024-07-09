@@ -1,15 +1,15 @@
 "use client";
 
+import { AutosizeTextarea } from "@/components/ui/autoResizeTextArea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useChat } from "ai/react";
 import { Bot, Send, User } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 export default function Chat() {
-  const scrollableRef = useRef<HTMLDivElement>(null);
+  const scrollableRef = useRef<HTMLLIElement>(null);
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       api: "/api/chat",
@@ -24,54 +24,68 @@ export default function Chat() {
   }, [messages]);
 
   return (
-    <Card className="h-screen bg-background p-4 m-0 flex flex-col">
+    <Card className="">
       <CardHeader>
         <CardTitle>Gemma Prompt</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col backdrop-blur-lg rounded-lg shadow-lg p-6 grow w-full max-w-full">
-        <ul className="flex flex-col space-y-4 mb-4 overflow-y-scroll no-scrollbar grow">
-          {messages.map((m, index) => (
+      <CardContent className="pb-0 flex flex-col h-full">
+        <ul className="space-y-6 h-[80vh] overflow-y-scroll no-scrollbar pb-3">
+          {messages.map((message, index) => (
             <li
               key={index}
-              className={`p-3 rounded-lg flex gap-4 items-center ${
-                m.role === "user" ? "self-end min-w-2/3" : "w-2/3"
-              }`}
+              className={cn(
+                "flex w-full",
+                message.role === "user" ? "justify-end" : "justify-start"
+              )}
+              ref={scrollableRef}
             >
-              <Bot className={cn(m.role === "user" && "hidden")} />
-              <div
-                className={`p-3 rounded-lg ${
-                  m.role === "user"
-                    ? "bg-primary text-background self-end min-w-2/3"
-                    : "bg-secondary w-2/3"
-                }`}
-              >
-                {m.content}
+              <div className={cn("flex gap-4 max-w-3xl")}>
+                <div>
+                  {message.role !== "user" && <Bot className="size-6" />}
+                </div>
+                <div
+                  className={cn(
+                    "rounded-lg p-2 px-4 text-pretty",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary"
+                  )}
+                >
+                  {message.content}
+                </div>
+                <div>
+                  {message.role === "user" && <User className="size-6" />}
+                </div>
               </div>
-              <User className={cn(m.role !== "user" && "hidden")} />
             </li>
           ))}
-          <div ref={scrollableRef} className="-mt-8" />
         </ul>
-
         <form
+          className="flex gap-2 sticky bottom-0 bg-white p-4 pt-0"
           onSubmit={handleSubmit}
-          className="flex items-center space-x-2 justify-self-end"
         >
-          <Input
-            type="text"
+          <AutosizeTextarea
+            className="resize-none no-scrollbar h-10 pr-8 text-pretty"
+            placeholder="Ask me anything..."
             value={input}
+            minHeight={40}
+            maxHeight={200}
             onChange={handleInputChange}
-            placeholder="Ask your question"
-            className="flex-grow p-2 rounded-lg"
             disabled={isLoading}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
           />
           <Button
             type="submit"
-            className={cn("absolute right-6 p-4")}
+            className="absolute right-4"
             disabled={isLoading}
             variant={"ghost"}
           >
-            <Send size={20} />
+            <Send className="size-5" />
           </Button>
         </form>
       </CardContent>
